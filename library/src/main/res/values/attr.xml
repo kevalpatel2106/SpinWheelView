@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="SpinWheel">
-        <attr name="noOfPossibilities" format="integer"/>
         <attr name="centerText" format="string"/>
+        <attr name="circleColor" format="color"/>
+        <attr name="circleStroke" format="dimension"/>
+        <attr name="centerCircleColor" format="color"/>
+        <attr name="centerTextColor" format="color"/>
+        <attr name="centerTextSize" format="dimension"/>
     </declare-styleable>
 </resources>
