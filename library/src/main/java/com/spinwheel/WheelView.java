@@ -1,5 +1,6 @@
 package com.spinwheel;
 
+import android.animation.Animator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -11,7 +12,10 @@ import android.support.annotation.RequiresApi;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 
 /**
  * Created by Keval on 10-Oct-16.
@@ -19,7 +23,7 @@ import android.view.View;
  * @author {@link 'https://github.com/kevalpatel2106'}
  */
 
-public class WheelView extends View {
+public class WheelView extends View implements SwipeListener {
     private Context mContext;
 
     private String[] mPossibilitiesName;
@@ -37,14 +41,21 @@ public class WheelView extends View {
     @ColorInt
     private int mCenterTextColor = Defaults.DEF_CENTER_TEXT_COLOR;
 
-    private int mViewHeight;
-    private int mViewWidth;
-
     private Paint mCirclePaint;
     private Paint mCenterCirclePaint;
     private TextPaint mCenterTextPaint;
 
     private float mUnitAngle;
+    private int mCircleRadius; //Radius of the outer circle
+    private int mCenterX;  //Center of the view
+    private int mCenterY;   //Center of the view
+
+    private GestureDetector mGestureDetector;
+    @Nullable
+    private SpinWheelListener mSpinWheelListener;
+
+    private boolean isRotating = false;
+
 
     public WheelView(Context context) {
         super(context);
@@ -73,6 +84,7 @@ public class WheelView extends View {
 
     private void init() {
         mUnitAngle = 360 / mNoOfPossibilities;
+        mGestureDetector = new GestureDetector(mContext, new GestureListener(this, DensityUtils.getScreenWidth(mContext) / 2));
     }
 
     private void init(AttributeSet attrs) {
@@ -164,6 +176,10 @@ public class WheelView extends View {
         createCirclePaint();
     }
 
+    public void setSpinWheelListener(@Nullable SpinWheelListener spinWheelListener) {
+        mSpinWheelListener = spinWheelListener;
+    }
+
     private void createCirclePaint() {
         //Surrounding circle paint object
         mCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -190,14 +206,10 @@ public class WheelView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        int circleRadius = Math.min(mViewWidth / 2, mViewHeight / 2) - Defaults.DEF_CIRCLE_PADDING; //Radius of the outer circle
-        int centerX = mViewHeight / 2;  //Center of the view
-        int centerY = mViewWidth / 2;   //Center of the view
-
         //Draw the circle
-        canvas.drawCircle(centerX,          //Center of the view
-                centerY,                    //Center of the view
-                circleRadius,               //Circle radius
+        canvas.drawCircle(mCenterX,          //Center of the view
+                mCenterY,                    //Center of the view
+                mCircleRadius,               //Circle radius
                 mCirclePaint);              //Paint
 
         //draw lines
@@ -208,35 +220,92 @@ public class WheelView extends View {
             newAngle = (float) (i * mUnitAngle * Defaults.DEGREE_TO_RADIAN);    //calculate new angle
 
             //calculate the line starting points
-            startX = (float) (centerX + Math.cos(newAngle) * circleRadius);     //x = radius * cos(angle) + centerX
-            startY = (float) (centerY + Math.sin(newAngle) * circleRadius);     //y = radius * sin(angle) + centerY
+            startX = (float) (mCenterX + Math.cos(newAngle) * mCircleRadius);     //x = radius * cos(angle) + mCenterX
+            startY = (float) (mCenterY + Math.sin(newAngle) * mCircleRadius);     //y = radius * sin(angle) + mCenterY
 
             canvas.drawLine(startX,
                     startY,
-                    centerX,        //End point is center of the circle
-                    centerY,        //End point is center of the circle
+                    mCenterX,        //End point is center of the circle
+                    mCenterY,        //End point is center of the circle
                     mCirclePaint);
         }
 
         //Draw the center circle
-        canvas.drawCircle(centerX,              //Center of the view
-                centerY,                        //Center of the view
-                (float) (circleRadius - (circleRadius / 1.5)),     //Radius of the inner center circle
+        canvas.drawCircle(mCenterX,              //Center of the view
+                mCenterY,                        //Center of the view
+                (float) (mCircleRadius - (mCircleRadius / 1.5)),     //Radius of the inner center circle
                 mCenterCirclePaint);             //Paint
 
         canvas.drawText(mCenterText,
-                centerX,
-                centerY - ((mCenterTextPaint.descent() + mCenterTextPaint.ascent()) / 2),
+                mCenterX,
+                mCenterY - ((mCenterTextPaint.descent() + mCenterTextPaint.ascent()) / 2),
                 mCenterTextPaint);
 
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        mViewHeight = MeasureSpec.getSize(widthMeasureSpec);
-        mViewWidth = MeasureSpec.getSize(heightMeasureSpec);
+        int mViewHeight = MeasureSpec.getSize(widthMeasureSpec);
+        int mViewWidth = MeasureSpec.getSize(heightMeasureSpec);
+
+        mCenterX = mViewHeight / 2;  //Center of the view
+        mCenterY = mViewWidth / 2;   //Center of the view
+
+        mCircleRadius = Math.min(mViewWidth / 2, mViewHeight / 2) - Defaults.DEF_CIRCLE_PADDING;    //Radius of the outer circle
 
         this.setMeasuredDimension(mViewWidth, mViewHeight);
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return mGestureDetector.onTouchEvent(event);
+    }
+
+    public void startSpinning(float velocity) {
+        isRotating = true;
+        animate().rotation((velocity / 1000) * 360)
+                .setDuration((long) Math.abs(velocity))
+                .setInterpolator(new DecelerateInterpolator())
+                .setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        isRotating = true;
+                        if (mSpinWheelListener != null)mSpinWheelListener.onRotationStarted();
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        isRotating = false;
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        isRotating = false;
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                })
+                .start();
+    }
+
+    @Override
+    public void onSwipeTop(float velocity) {
+        if (isRotating) return;
+        startSpinning(velocity);
+    }
+
+    @Override
+    public void onSwipeBottom(float velocity) {
+        if (isRotating) return;
+        startSpinning(velocity);
+    }
+
+    public void reset() {
+        setRotation(0);
+    }
 }
+

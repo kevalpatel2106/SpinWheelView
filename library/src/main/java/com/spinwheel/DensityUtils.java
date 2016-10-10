@@ -11,9 +11,9 @@ import android.view.WindowManager;
  * @author {@link 'https://github.com/kevalpatel2106'}
  */
 
-public class DensityUtils {
+class DensityUtils {
 
-    public static int getScreenWidth(Context context) {
+    static int getScreenWidth(Context context) {
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         Point size = new Point();
@@ -22,7 +22,7 @@ public class DensityUtils {
         return size.x;
     }
 
-    public static int getScreenHeight(Context context) {
+    static int getScreenHeight(Context context) {
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         Point size = new Point();
