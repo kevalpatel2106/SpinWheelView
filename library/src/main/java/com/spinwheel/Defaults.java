@@ -20,4 +20,7 @@ class Defaults {
     static final int MAX_CENTER_TEXT_LENGTH = 8;
 
     static final double DEGREE_TO_RADIAN = 0.0174533;
+
+    static final int MIN_NO_OF_POSSIBILITIES = 2;
+    static final int MAX_NO_OF_POSSIBILITIES = 12;
 }

@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Build;
 import android.support.annotation.ColorInt;
@@ -29,31 +30,35 @@ public class WheelView extends View implements SwipeListener {
     private String[] mPossibilitiesName;
     private int mNoOfPossibilities = 8;
 
+
     private String mCenterText = Defaults.DEF_CENTER_TEXT;
     @ColorInt
     private int mCenterCircleColor = Defaults.DEF_CIRCLE_COLOR;
+
 
     private int mCircleStrokeWidth = Defaults.DEF_CIRCLE_STROKE_WIDTH;
     @ColorInt
     private int mCircleColor = Defaults.DEF_CIRCLE_COLOR;
 
+
     private float mCenterTextSize = Defaults.DEF_CENTER_TEXT_SIZE;
     @ColorInt
     private int mCenterTextColor = Defaults.DEF_CENTER_TEXT_COLOR;
 
+
     private Paint mCirclePaint;
     private Paint mCenterCirclePaint;
     private TextPaint mCenterTextPaint;
+    private TextPaint mPossibilitiesTextPaint;
+
 
     private float mUnitAngle;
-    private int mCircleRadius; //Radius of the outer circle
-    private int mCenterX;  //Center of the view
-    private int mCenterY;   //Center of the view
-
+    private int mCircleRadius;                      //Radius of the outer circle
+    private int mCenterX;                           //Center of the view
+    private int mCenterY;                           //Center of the view
     private GestureDetector mGestureDetector;
     @Nullable
     private SpinWheelListener mSpinWheelListener;
-
     private boolean isRotating = false;
 
 
@@ -83,7 +88,6 @@ public class WheelView extends View implements SwipeListener {
     }
 
     private void init() {
-        mUnitAngle = 360 / mNoOfPossibilities;
         mGestureDetector = new GestureDetector(mContext, new GestureListener(this, DensityUtils.getScreenWidth(mContext) / 2));
     }
 
@@ -105,13 +109,6 @@ public class WheelView extends View implements SwipeListener {
         } finally {
             a.recycle();
         }
-    }
-
-    /**
-     * @return Number of possibilities of the outcome.
-     */
-    public int getNoOfPossibilities() {
-        return mNoOfPossibilities;
     }
 
     @ColorInt
@@ -180,6 +177,25 @@ public class WheelView extends View implements SwipeListener {
         mSpinWheelListener = spinWheelListener;
     }
 
+    public String[] getPossibilitiesName() {
+        return mPossibilitiesName;
+    }
+
+    public void setPossibleOutcomeName(String[] possibilitiesName) {
+        if (possibilitiesName.length < Defaults.MIN_NO_OF_POSSIBILITIES) {
+            throw new IllegalArgumentException("Number of possibilities cannot be less than 2.");
+        } else if (possibilitiesName.length > Defaults.MAX_NO_OF_POSSIBILITIES) {
+            throw new IllegalArgumentException("Number of possibilities cannot be more than 12.");
+        }
+
+        mPossibilitiesName = possibilitiesName;
+        mNoOfPossibilities = mPossibilitiesName.length;
+        mUnitAngle = 360 / mNoOfPossibilities;
+
+        invalidate();
+        requestLayout();
+    }
+
     private void createCirclePaint() {
         //Surrounding circle paint object
         mCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -198,6 +214,12 @@ public class WheelView extends View implements SwipeListener {
         mCenterTextPaint.setColor(mCenterTextColor);
         mCenterTextPaint.setTextAlign(Paint.Align.CENTER);
 
+        //Set the center text pain
+        mPossibilitiesTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        mPossibilitiesTextPaint.setTextSize(mCenterTextSize);
+        mPossibilitiesTextPaint.setColor(Color.parseColor("#FF0000"));
+        mPossibilitiesTextPaint.setTextAlign(Paint.Align.CENTER);
+
         invalidate();
         requestLayout();
     }
@@ -212,12 +234,12 @@ public class WheelView extends View implements SwipeListener {
                 mCircleRadius,               //Circle radius
                 mCirclePaint);              //Paint
 
-        //draw lines
-        float newAngle = 0;
+        float newAngle;
         float startX;
         float startY;
         for (int i = 0; i < mNoOfPossibilities; i++) {
-            newAngle = (float) (i * mUnitAngle * Defaults.DEGREE_TO_RADIAN);    //calculate new angle
+            //*************draw lines**************//
+            newAngle = (float) (i * mUnitAngle * Defaults.DEGREE_TO_RADIAN);    //calculate new angle that is in radian.
 
             //calculate the line starting points
             startX = (float) (mCenterX + Math.cos(newAngle) * mCircleRadius);     //x = radius * cos(angle) + mCenterX
@@ -228,6 +250,16 @@ public class WheelView extends View implements SwipeListener {
                     mCenterX,        //End point is center of the circle
                     mCenterY,        //End point is center of the circle
                     mCirclePaint);
+
+            //*************draw possible outcome text**************//
+            //calculate new angle
+            newAngle = (float) ((i * mUnitAngle * Defaults.DEGREE_TO_RADIAN) + (mUnitAngle / 2 * Defaults.DEGREE_TO_RADIAN));
+
+            //calculate the line starting points
+            startX = (float) (mCenterX + Math.cos(newAngle) * (mCircleRadius - mCircleRadius / 2.8));     //x = radius * cos(angle) + mCenterX
+            startY = (float) (mCenterY + Math.sin(newAngle) * (mCircleRadius - mCircleRadius / 2.8));     //y = radius * sin(angle) + mCenterY
+
+            canvas.drawText(mPossibilitiesName[i], startX, startY, mPossibilitiesTextPaint);
         }
 
         //Draw the center circle
@@ -264,14 +296,23 @@ public class WheelView extends View implements SwipeListener {
 
     public void startSpinning(float velocity) {
         isRotating = true;
-        animate().rotation((velocity / 1000) * 360)
-                .setDuration((long) Math.abs(velocity))
+
+        //calculate rotation angle
+        float rotationAngle = (velocity / 1000) * 360;
+        if (rotationAngle % mUnitAngle == 0)
+            rotationAngle += 5;    //Check if the final rotation angle is exactly at the boundary of two region, than add 5 degrees
+
+        //calculate rotation duration
+        long duration = (long) (Math.abs(velocity) / 1.5);
+
+        animate().rotation(rotationAngle)
+                .setDuration(duration)
                 .setInterpolator(new DecelerateInterpolator())
                 .setListener(new Animator.AnimatorListener() {
                     @Override
                     public void onAnimationStart(Animator animation) {
                         isRotating = true;
-                        if (mSpinWheelListener != null)mSpinWheelListener.onRotationStarted();
+                        if (mSpinWheelListener != null) mSpinWheelListener.onRotationStarted();
                     }
 
                     @Override

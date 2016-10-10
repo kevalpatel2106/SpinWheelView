@@ -13,6 +13,7 @@
         android:layout_height="match_parent"
         app:centerCircleColor="@color/colorAccent"
         app:centerText="Spin Now"
+        android:id="@+id/wheel_view"
         app:centerTextColor="@android:color/white"
         app:centerTextSize="20sp"
         app:circleColor="@color/colorPrimary"
