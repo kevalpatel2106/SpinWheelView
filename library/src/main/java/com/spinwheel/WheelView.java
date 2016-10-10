@@ -318,6 +318,7 @@ public class WheelView extends View implements SwipeListener {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         isRotating = false;
+                        calculateOutcomeValue();
                     }
 
                     @Override
@@ -347,6 +348,18 @@ public class WheelView extends View implements SwipeListener {
 
     public void reset() {
         setRotation(0);
+    }
+
+    private void calculateOutcomeValue() {
+        float finalRotation = (getRotation() + 90) % 360;       //Adding 90 degree to make the final position at the top of the view.
+
+        if (finalRotation < 0)  //if the rotation is anticlockwise..
+            finalRotation = 360 + finalRotation;
+
+        int stepsPassed = (int) (finalRotation / mUnitAngle);
+
+        if (mSpinWheelListener != null)
+            mSpinWheelListener.onRotationEnd(mPossibilitiesName[mNoOfPossibilities - stepsPassed - 1]);
     }
 }
 

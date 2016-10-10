@@ -10,5 +10,5 @@ public interface SpinWheelListener {
 
     void onRotationStarted();
 
-    void onRotationEnd(int portionInArray, String result);
+    void onRotationEnd(String result);
 }
