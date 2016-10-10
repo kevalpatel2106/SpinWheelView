@@ -7,5 +7,7 @@
         <attr name="centerCircleColor" format="color"/>
         <attr name="centerTextColor" format="color"/>
         <attr name="centerTextSize" format="dimension"/>
+        <attr name="possibilityTextColor" format="color"/>
+        <attr name="possibilityTextSize" format="dimension"/>
     </declare-styleable>
 </resources>

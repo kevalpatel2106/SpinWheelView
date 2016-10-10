@@ -3,9 +3,11 @@ package com.spinwheel;
 import android.animation.Animator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
@@ -45,6 +47,10 @@ public class WheelView extends View implements SwipeListener {
     @ColorInt
     private int mCenterTextColor = Defaults.DEF_CENTER_TEXT_COLOR;
 
+    private float mPossibilitiesTextSize = Defaults.DEF_CENTER_TEXT_SIZE;
+    @ColorInt
+    private int mPossibilitiesTextColor = Defaults.DEF_CENTER_TEXT_COLOR;
+
 
     private Paint mCirclePaint;
     private Paint mCenterCirclePaint;
@@ -60,6 +66,7 @@ public class WheelView extends View implements SwipeListener {
     @Nullable
     private SpinWheelListener mSpinWheelListener;
     private boolean isRotating = false;
+    private Bitmap mPointerBitmap;
 
 
     public WheelView(Context context) {
@@ -106,6 +113,8 @@ public class WheelView extends View implements SwipeListener {
             setCenterText(a.getString(R.styleable.SpinWheel_centerText));
             setCenterTextColor(a.getColor(R.styleable.SpinWheel_centerTextColor, Defaults.DEF_CENTER_TEXT_COLOR));
             setCenterTextSize(a.getDimensionPixelSize(R.styleable.SpinWheel_centerTextSize, Defaults.DEF_CENTER_TEXT_SIZE));
+            setPossibilityTextColor(a.getColor(R.styleable.SpinWheel_possibilityTextColor, Defaults.DEF_CENTER_TEXT_COLOR));
+            setPossibilityTextSize(a.getDimensionPixelSize(R.styleable.SpinWheel_possibilityTextSize, Defaults.DEF_CENTER_TEXT_SIZE));
         } finally {
             a.recycle();
         }
@@ -173,6 +182,24 @@ public class WheelView extends View implements SwipeListener {
         createCirclePaint();
     }
 
+    public int getPossibilityTextColor() {
+        return mPossibilitiesTextColor;
+    }
+
+    public void setPossibilityTextColor(int possibilityTextColor) {
+        mPossibilitiesTextColor = possibilityTextColor;
+        createCirclePaint();
+    }
+
+    public float getPossibilityTextSize() {
+        return mPossibilitiesTextSize;
+    }
+
+    public void setPossibilityTextSize(float possibilityTextSize) {
+        mPossibilitiesTextSize = possibilityTextSize;
+        createCirclePaint();
+    }
+
     public void setSpinWheelListener(@Nullable SpinWheelListener spinWheelListener) {
         mSpinWheelListener = spinWheelListener;
     }
@@ -216,8 +243,8 @@ public class WheelView extends View implements SwipeListener {
 
         //Set the center text pain
         mPossibilitiesTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        mPossibilitiesTextPaint.setTextSize(mCenterTextSize);
-        mPossibilitiesTextPaint.setColor(Color.parseColor("#FF0000"));
+        mPossibilitiesTextPaint.setTextSize(mPossibilitiesTextSize);
+        mPossibilitiesTextPaint.setColor(mPossibilitiesTextColor);
         mPossibilitiesTextPaint.setTextAlign(Paint.Align.CENTER);
 
         invalidate();
@@ -262,16 +289,20 @@ public class WheelView extends View implements SwipeListener {
             canvas.drawText(mPossibilitiesName[i], startX, startY, mPossibilitiesTextPaint);
         }
 
-        //Draw the center circle
+        //*************draw central circle**************//
         canvas.drawCircle(mCenterX,              //Center of the view
                 mCenterY,                        //Center of the view
                 (float) (mCircleRadius - (mCircleRadius / 1.5)),     //Radius of the inner center circle
                 mCenterCirclePaint);             //Paint
 
+        //*************draw central circle text**************//
         canvas.drawText(mCenterText,
                 mCenterX,
                 mCenterY - ((mCenterTextPaint.descent() + mCenterTextPaint.ascent()) / 2),
                 mCenterTextPaint);
+
+        //*************draw pointer**************//
+//        canvas.drawLine(mCenterX, 0, mCenterX, 40, mCirclePaint);
 
     }
 

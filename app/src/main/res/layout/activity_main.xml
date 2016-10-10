@@ -9,13 +9,15 @@
     tools:context="spinwheel.sample.MainActivity">
 
     <com.spinwheel.WheelView
+        android:id="@+id/wheel_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:centerCircleColor="@color/colorAccent"
         app:centerText="Spin Now"
-        android:id="@+id/wheel_view"
         app:centerTextColor="@android:color/white"
         app:centerTextSize="20sp"
         app:circleColor="@color/colorPrimary"
-        app:circleStroke="10dp"/>
+        app:circleStroke="10dp"
+        app:possibilityTextColor="@color/colorPrimary"
+        app:possibilityTextSize="18sp"/>
 </RelativeLayout>
